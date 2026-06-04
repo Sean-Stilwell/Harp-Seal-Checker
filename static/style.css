@@ -20,7 +20,7 @@ body {
     gap: 30px;
 }
 
-/*dotted boxs*/
+/* dotted boxes */
 .wireframe-box {
     background: white;
     border: 2px solid #ccc;
@@ -29,7 +29,7 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
 }
 
-/*Map and Side Panel*/
+/* Map and Side Panel */
 .header-box {
     margin-bottom: -10px;
 }
@@ -52,7 +52,7 @@ body {
     position: relative;
 }
 
-/*Container for map stuff*/
+/* Container for map stuff */
 .map-outer {
     flex: 1;
     display: flex;
@@ -60,7 +60,7 @@ body {
     height: 100%;
 }
 
-/*map title*/
+/* map title */
 .map-stationary-tab {
     background: #ffffff;
     border: 2px solid #ccc;
@@ -74,7 +74,7 @@ body {
     width: fit-content;
 }
 
-/*Map*/
+/* Map Viewport Container */
 .map-viewport {
     flex: 1;
     border: 2px solid #ccc;
@@ -84,18 +84,30 @@ body {
     overflow: hidden; /* Hides native scrollbars */
     position: relative;
     background-color: #cad2d3;
+    cursor: grab; /* Grabbing hand cursor to indicate panning */
 }
 
-/*Map Bounds*/
+.map-viewport:active {
+    cursor: grabbing;
+}
+
+/* Map Canvas 
+   Height is set to 1300px to accommodate the portrait NL Map. 
+   Since width is 100%, dragging will only scroll vertically.
+*/
 .map-canvas {
     width: 100%;
-    height: 100%;
+    height: 1300px; 
     position: absolute;
     top: 0;
     left: 0;
+    background-image: url('/static/images/NL Map.png'); /* Set to your NL Map background */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-/*canvas position*/
+/* canvas position */
 .seal-icon-wrapper {
     position: absolute;
     transform: translate(-50%, -50%); /* Centered on their % coordinate */
@@ -137,7 +149,7 @@ body {
     pointer-events: none;
 }
 
-/*Tooltip*/
+/* Tooltip */
 .click-prompt-tooltip {
     position: absolute;
     background: #ffeaa7;
@@ -151,7 +163,7 @@ body {
     z-index: 100;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translate(-50%, -160%);
+    transform: translate(-50%, -160%); /* Positioned slightly higher above seal */
 }
 
 .click-prompt-tooltip::after {
@@ -167,7 +179,7 @@ body {
     width: 0;
 }
 
-/*Side Panel*/
+/* Side Panel */
 .sidebar-panel {
     width: 360px;
     height: 100%;
@@ -187,7 +199,7 @@ body {
     font-size: 13px;
 }
 
-/*Index*/
+/* Index */
 .index-section {
     display: grid;
     grid-template-columns: 1fr 2fr;

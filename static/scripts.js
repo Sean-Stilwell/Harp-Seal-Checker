@@ -1,10 +1,10 @@
-// Map position 
+// Realistic map positions mapping to your portrait Newfoundland & Labrador map (percentages)
 const sealsData = [
-    { id: "SEAL-209", x: 45, y: 50, population: 140, gender: "55M / 45F", age: "6 years", area: "3L (NAFO)", meal: "Capelin", otolith: 2.2 },
-    { id: "SEAL-540", x: 65, y: 35, population: 45,  gender: "30M / 70F", age: "2 years", area: "3K (NAFO)", meal: "Sand Lance", otolith: 0.8 },
-    { id: "SEAL-112", x: 50, y: 75, population: 90,  gender: "50M / 50F", age: "11 years", area: "2J (NAFO)", meal: "Atlantic Cod", otolith: 3.5 },
-    { id: "SEAL-804", x: 80, y: 60, population: 15,  gender: "80M / 20F", age: "1 year", area: "4R (NAFO)", meal: "Crustaceans", otolith: 0.4 },
-    { id: "SEAL-301", x: 35, y: 65, population: 110, gender: "45M / 55F", age: "8 years", area: "3Ps (NAFO)", meal: "Redfish", otolith: 1.9 }
+    { id: "SEAL-209", x: 87, y: 81, population: 140, gender: "55M / 45F", age: "6 years", area: "3L (NAFO) - Avalon Peninsula", meal: "Capelin", otolith: 2.2 },
+    { id: "SEAL-540", x: 38, y: 28, population: 45,  gender: "30M / 70F", age: "2 years", area: "2H (NAFO) - Nain", meal: "Sand Lance", otolith: 0.8 },
+    { id: "SEAL-112", x: 42, y: 51, population: 90,  gender: "50M / 50F", age: "11 years", area: "2J (NAFO) - Goose Bay", meal: "Atlantic Cod", otolith: 3.5 },
+    { id: "SEAL-804", x: 62, y: 61, population: 15,  gender: "80M / 20F", age: "1 year", area: "4R (NAFO) - Northern Peninsula", meal: "Crustaceans", otolith: 0.4 },
+    { id: "SEAL-301", x: 70, y: 84, population: 110, gender: "45M / 55F", age: "8 years", area: "3Ps (NAFO) - Placentia Bay", meal: "Redfish", otolith: 1.9 }
 ];
 
 const viewport = document.getElementById('map-viewport');
@@ -12,6 +12,32 @@ const canvas = document.getElementById('map-canvas');
 const clickPrompt = document.getElementById('click-prompt');
 
 let promptDismissed = false;
+
+// --- CLICK AND DRAG TO PAN VERTICALLY ---
+let isDragging = false;
+let startY, scrollTop;
+
+viewport.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startY = e.pageY - viewport.offsetTop;
+    scrollTop = viewport.scrollTop;
+});
+
+viewport.addEventListener('mouseleave', () => {
+    isDragging = false;
+});
+
+viewport.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+viewport.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const y = e.pageY - viewport.offsetTop;
+    const walkY = (y - startY); // Scroll distance factor
+    viewport.scrollTop = scrollTop - walkY; // Move vertical scroll position
+});
 
 //Icon Rendering 
 function renderInterface() {
@@ -32,7 +58,11 @@ function renderInterface() {
 
         wrapper.innerHTML = `
             <div class="seal-icon-image" style="width: ${size}px; height: ${size}px;">
-                <img src="/home/hamsamm/Harp-Seal-Checker/images/Seal Icon.png" alt="seal">
+                <!-- Points to your static/images folder in Flask. 
+                     If you prefer local absolute paths, change this path to:
+                     /home/hamsamm/Harp-Seal-Checker/images/Seal Icon.png
+                -->
+                <img src="/static/images/Seal Icon.png" alt="seal">
             </div>
             <div class="seal-label">${seal.id}</div>
         `;
@@ -104,5 +134,8 @@ function selectSeal(seal) {
     preyVisual.style.transform = `scale(${scale})`;
 }
 
+// Initialize rendering and center map scroll vertically
 renderInterface();
+viewport.scrollTop = 350; // Align map view with Central Newfoundland on load
+
 window.addEventListener('resize', positionHelperPrompt); //Window size
