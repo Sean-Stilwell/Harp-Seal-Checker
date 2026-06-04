@@ -1,4 +1,3 @@
-// Realistic map positions mapping to your portrait Newfoundland & Labrador map (percentages)
 const sealsData = [
     { id: "SEAL-209", x: 87, y: 81, population: 140, gender: "55M / 45F", age: "6 years", area: "3L (NAFO) - Avalon Peninsula", meal: "Capelin", otolith: 2.2 },
     { id: "SEAL-540", x: 38, y: 28, population: 45,  gender: "30M / 70F", age: "2 years", area: "2H (NAFO) - Nain", meal: "Sand Lance", otolith: 0.8 },
@@ -7,39 +6,38 @@ const sealsData = [
     { id: "SEAL-301", x: 70, y: 84, population: 110, gender: "45M / 55F", age: "8 years", area: "3Ps (NAFO) - Placentia Bay", meal: "Redfish", otolith: 1.9 }
 ];
 
-const viewport = document.getElementById('map-viewport');
-const canvas = document.getElementById('map-canvas');
-const clickPrompt = document.getElementById('click-prompt');
-
-let promptDismissed = false;
-
-// --- CLICK AND DRAG TO PAN VERTICALLY ---
+let viewport, canvas, clickPrompt;
 let isDragging = false;
 let startY, scrollTop;
+let promptDismissed = false;
 
-viewport.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    startY = e.pageY - viewport.offsetTop;
-    scrollTop = viewport.scrollTop;
-});
+//dragging
+function setupDragToPan() {
+    viewport.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        viewport.style.cursor = 'grabbing';
+        startY = e.clientY; // Uses window position
+        scrollTop = viewport.scrollTop;
+        e.preventDefault(); // Stops text and native browser ghost drag interference
+    });
 
-viewport.addEventListener('mouseleave', () => {
-    isDragging = false;
-});
+    // Tracking globally on the window object prevents scroll locks when cursor exits the map frame
+    window.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            viewport.style.cursor = 'grab';
+        }
+    });
 
-viewport.addEventListener('mouseup', () => {
-    isDragging = false;
-});
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const y = e.clientY;
+        const walkY = y - startY; // distance from start
+        viewport.scrollTop = scrollTop - walkY;
+    });
+}
 
-viewport.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const y = e.pageY - viewport.offsetTop;
-    const walkY = (y - startY); // Scroll distance factor
-    viewport.scrollTop = scrollTop - walkY; // Move vertical scroll position
-});
-
-//Icon Rendering 
+//icons
 function renderInterface() {
     const markers = canvas.querySelectorAll('.seal-icon-wrapper');
     markers.forEach(m => m.remove());
@@ -58,11 +56,7 @@ function renderInterface() {
 
         wrapper.innerHTML = `
             <div class="seal-icon-image" style="width: ${size}px; height: ${size}px;">
-                <!-- Points to your static/images folder in Flask. 
-                     If you prefer local absolute paths, change this path to:
-                     /home/hamsamm/Harp-Seal-Checker/images/Seal Icon.png
-                -->
-                <img src="/static/images/Seal Icon.png" alt="seal">
+                <img src="/static/images/Seal%20Icon.png" alt="seal">
             </div>
             <div class="seal-label">${seal.id}</div>
         `;
@@ -88,7 +82,7 @@ function renderInterface() {
     positionHelperPrompt();
 }
 
-//Tooltip
+//tooltip helper
 function positionHelperPrompt() {
     if (promptDismissed || sealsData.length === 0) return;
     const viewCenterX = 50;
@@ -114,7 +108,7 @@ function positionHelperPrompt() {
     }
 }
 
-//Details
+//details
 function selectSeal(seal) {
     promptDismissed = true;
     clickPrompt.style.display = 'none';
@@ -124,7 +118,9 @@ function selectSeal(seal) {
     document.getElementById('side-gender').innerText = seal.gender;
     document.getElementById('side-age').innerText = seal.age;
 
-    document.getElementById('detail-id').innerText = seal.id;
+    const detailIdEl = document.getElementById('detail-id');
+    if (detailIdEl) detailIdEl.innerText = seal.id;
+    
     document.getElementById('detail-age').innerText = seal.age;
     document.getElementById('detail-location').innerText = seal.area;
     document.getElementById('detail-meal').innerText = seal.meal;
@@ -134,8 +130,26 @@ function selectSeal(seal) {
     preyVisual.style.transform = `scale(${scale})`;
 }
 
-// Initialize rendering and center map scroll vertically
-renderInterface();
-viewport.scrollTop = 350; // Align map view with Central Newfoundland on load
+//init
+function init() {
+    viewport = document.getElementById('map-viewport');
+    canvas = document.getElementById('map-canvas');
+    clickPrompt = document.getElementById('click-prompt');
 
-window.addEventListener('resize', positionHelperPrompt); //Window size
+    if (viewport && canvas && clickPrompt) {
+        setupDragToPan();
+        renderInterface();
+        viewport.scrollTop = 350; // Map starting position
+    }
+}
+
+// Guard against executing before ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+
+window.addEventListener('resize', () => {
+    if (clickPrompt) positionHelperPrompt();
+});

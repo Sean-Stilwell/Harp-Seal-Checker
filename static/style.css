@@ -80,28 +80,37 @@ body {
     border: 2px solid #ccc;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
-    border-top-right-radius: 8px; /* Curve the rest of the box */
-    overflow: hidden; /* Hides native scrollbars */
+    border-top-right-radius: 8px;
+    overflow-y: scroll; 
     position: relative;
     background-color: #cad2d3;
-    cursor: grab; /* Grabbing hand cursor to indicate panning */
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    
+    /* Hide default scrollbars */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.map-viewport::-webkit-scrollbar {
+    display: none;
 }
 
 .map-viewport:active {
     cursor: grabbing;
 }
 
-/* Map Canvas 
-   Height is set to 1300px to accommodate the portrait NL Map. 
-   Since width is 100%, dragging will only scroll vertically.
-*/
+/* Map Canvas */
 .map-canvas {
     width: 100%;
-    height: 1300px; 
-    position: absolute;
+    height: 1145px; 
+    position: relative;
     top: 0;
     left: 0;
-    background-image: url('/static/images/NL Map.png'); /* Set to your NL Map background */
+    background-image: url('/static/images/NL%20Map.png'); /* Space encoded as %20 */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -110,7 +119,7 @@ body {
 /* canvas position */
 .seal-icon-wrapper {
     position: absolute;
-    transform: translate(-50%, -50%); /* Centered on their % coordinate */
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -136,6 +145,7 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    pointer-events: none; /* Prevents browser image drag interference */
 }
 
 .seal-label {
@@ -146,7 +156,7 @@ body {
     border: 1px solid #ccc;
     border-radius: 3px;
     margin-top: 4px;
-    pointer-events: none;
+    pointer-events: none; /* Prevents text selection interference */
 }
 
 /* Tooltip */
