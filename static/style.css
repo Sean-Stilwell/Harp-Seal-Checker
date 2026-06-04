@@ -1,0 +1,267 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f6fa;
+    color: #333;
+    overflow-y: scroll; /* Allows standard page scrolling */
+}
+
+.page-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/*dotted boxs*/
+.wireframe-box {
+    background: white;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+/*Map and Side Panel*/
+.header-box {
+    margin-bottom: -10px;
+}
+
+.header-box a {
+    color: #3498db;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.header-box a:hover {
+    text-decoration: underline;
+}
+
+.map-section {
+    display: flex;
+    gap: 20px;
+    height: 600px;
+    position: relative;
+}
+
+/*Container for map stuff*/
+.map-outer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/*map title*/
+.map-stationary-tab {
+    background: #ffffff;
+    border: 2px solid #ccc;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: #555;
+    width: fit-content;
+}
+
+/*Map*/
+.map-viewport {
+    flex: 1;
+    border: 2px solid #ccc;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-top-right-radius: 8px; /* Curve the rest of the box */
+    overflow: hidden; /* Hides native scrollbars */
+    position: relative;
+    background-color: #cad2d3;
+}
+
+/*Map Bounds*/
+.map-canvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/*canvas position*/
+.seal-icon-wrapper {
+    position: absolute;
+    transform: translate(-50%, -50%); /* Centered on their % coordinate */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.seal-icon-image {
+    border: 2px solid #3498db;
+    background: white;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+.seal-icon-image:hover {
+    transform: scale(1.15);
+    border-color: #2ecc71;
+}
+
+.seal-icon-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.seal-label {
+    font-size: 11px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1px 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    margin-top: 4px;
+    pointer-events: none;
+}
+
+/*Tooltip*/
+.click-prompt-tooltip {
+    position: absolute;
+    background: #ffeaa7;
+    border: 2px solid #fdcb6e;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #d63031;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translate(-50%, -160%);
+}
+
+.click-prompt-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 10px 10px 0;
+    border-style: solid;
+    border-color: #fdcb6e transparent;
+    display: block;
+    width: 0;
+}
+
+/*Side Panel*/
+.sidebar-panel {
+    width: 360px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.graph-placeholder {
+    background: #f1f2f6;
+    border: 1px dashed #aaa;
+    border-radius: 6px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+    color: #777;
+    font-size: 13px;
+}
+
+/*Index*/
+.index-section {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: auto 1fr;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.index-header-left {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+}
+
+.index-header-right {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+}
+
+.index-body-left {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    display: flex;
+    flex-direction: column;
+    min-height: 450px;
+}
+
+.index-body-right {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+}
+
+/* Scrollable list of seals */
+.index-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 380px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.index-list-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.index-list-item:hover {
+    background: #eef2f5;
+}
+
+/* Filters and inputs */
+.filter-grid {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-grid input, .filter-grid select {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex: 1;
+    min-width: 140px;
+    font-size: 13px;
+}
+
+.infographic-showcase {
+    background: #f8f9fa;
+    border: 2px dashed #ccc;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 15px;
+    text-align: center;
+}
