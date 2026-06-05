@@ -58,6 +58,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-width: 0;
 }
 
 /* map title */
@@ -81,7 +82,7 @@ body {
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
     border-top-right-radius: 8px;
-    overflow-y: scroll; 
+    overflow: auto; 
     position: relative;
     background-color: #cad2d3;
     cursor: grab;
@@ -105,12 +106,12 @@ body {
 
 /* Map Canvas */
 .map-canvas {
-    width: 100%;
-    height: 1145px; 
+    width: 1145px;
+    height: 1600px; 
     position: relative;
     top: 0;
     left: 0;
-    background-image: url('/static/images/NL%20Map.png'); /* Space encoded as %20 */
+    background-image: url('/static/images/NL%20Map.png'); 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -192,9 +193,11 @@ body {
 /* Side Panel */
 .sidebar-panel {
     width: 360px;
+    flex-shrink: 0;
     height: 100%;
     overflow-y: auto;
 }
+
 
 .graph-placeholder {
     background: #f1f2f6;

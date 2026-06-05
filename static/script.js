@@ -8,20 +8,23 @@ const sealsData = [
 
 let viewport, canvas, clickPrompt;
 let isDragging = false;
-let startY, scrollTop;
+let startX, startY;         // Track both X and Y starting click positions
+let scrollLeft, scrollTop;  // Track both X and Y initial scroll offsets
 let promptDismissed = false;
 
-//dragging
+// dragging in 2D space
 function setupDragToPan() {
     viewport.addEventListener('mousedown', (e) => {
         isDragging = true;
         viewport.style.cursor = 'grabbing';
-        startY = e.clientY; // Uses window position
+        startX = e.clientX;
+        startY = e.clientY;
+        scrollLeft = viewport.scrollLeft;
         scrollTop = viewport.scrollTop;
-        e.preventDefault(); // Stops text and native browser ghost drag interference
+        e.preventDefault(); // Prevents default text selections and standard browser ghost dragging
     });
 
-    // Tracking globally on the window object prevents scroll locks when cursor exits the map frame
+    // Tracking globally on the window object prevents scroll locks if the cursor leaves the frame
     window.addEventListener('mouseup', () => {
         if (isDragging) {
             isDragging = false;
@@ -31,13 +34,16 @@ function setupDragToPan() {
 
     window.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
+        const x = e.clientX;
         const y = e.clientY;
-        const walkY = y - startY; // distance from start
+        const walkX = x - startX; 
+        const walkY = y - startY; 
+        viewport.scrollLeft = scrollLeft - walkX;
         viewport.scrollTop = scrollTop - walkY;
     });
 }
 
-//icons
+// icons
 function renderInterface() {
     const markers = canvas.querySelectorAll('.seal-icon-wrapper');
     markers.forEach(m => m.remove());
@@ -46,7 +52,7 @@ function renderInterface() {
         const wrapper = document.createElement('div');
         wrapper.className = 'seal-icon-wrapper';
         
-        // Position on the map
+        // Position relative to the fixed size of the map-canvas
         wrapper.style.left = `${seal.x}%`;
         wrapper.style.top = `${seal.y}%`;
 
@@ -70,19 +76,21 @@ function renderInterface() {
     });
 
     const listContainer = document.getElementById('index-list-container');
-    listContainer.innerHTML = '';
-    sealsData.forEach(seal => {
-        const item = document.createElement('div');
-        item.className = 'index-list-item';
-        item.innerHTML = `<strong>${seal.id}</strong> — Age: ${seal.age}, Area: ${seal.area}`;
-        item.addEventListener('click', () => selectSeal(seal));
-        listContainer.appendChild(item);
-    });
+    if (listContainer) {
+        listContainer.innerHTML = '';
+        sealsData.forEach(seal => {
+            const item = document.createElement('div');
+            item.className = 'index-list-item';
+            item.innerHTML = `<strong>${seal.id}</strong> — Age: ${seal.age}, Area: ${seal.area}`;
+            item.addEventListener('click', () => selectSeal(seal));
+            listContainer.appendChild(item);
+        });
+    }
 
     positionHelperPrompt();
 }
 
-//tooltip helper
+// tooltip helper
 function positionHelperPrompt() {
     if (promptDismissed || sealsData.length === 0) return;
     const viewCenterX = 50;
@@ -101,17 +109,17 @@ function positionHelperPrompt() {
         }
     });
 
-    if (closestSeal) {
+    if (closestSeal && clickPrompt) {
         clickPrompt.style.left = `${closestSeal.x}%`;
         clickPrompt.style.top = `${closestSeal.y}%`;
         clickPrompt.style.display = 'block';
     }
 }
 
-//details
+// details
 function selectSeal(seal) {
     promptDismissed = true;
-    clickPrompt.style.display = 'none';
+    if (clickPrompt) clickPrompt.style.display = 'none';
 
     document.getElementById('side-title').innerText = `${seal.id} Profile`;
     document.getElementById('side-pop').innerText = seal.population;
@@ -126,11 +134,13 @@ function selectSeal(seal) {
     document.getElementById('detail-meal').innerText = seal.meal;
 
     const preyVisual = document.getElementById('prey-visual');
-    const scale = Math.min(Math.max(seal.otolith * 0.7, 0.5), 3.0);
-    preyVisual.style.transform = `scale(${scale})`;
+    if (preyVisual) {
+        const scale = Math.min(Math.max(seal.otolith * 0.7, 0.5), 3.0);
+        preyVisual.style.transform = `scale(${scale})`;
+    }
 }
 
-//init
+// init
 function init() {
     viewport = document.getElementById('map-viewport');
     canvas = document.getElementById('map-canvas');
@@ -139,7 +149,10 @@ function init() {
     if (viewport && canvas && clickPrompt) {
         setupDragToPan();
         renderInterface();
-        viewport.scrollTop = 350; // Map starting position
+        
+        // Centered coordinates to frame Newfoundland properly upon load
+        viewport.scrollTop = 450; 
+        viewport.scrollLeft = 150;
     }
 }
 
