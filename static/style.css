@@ -174,7 +174,7 @@ body {
     z-index: 100;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translate(-50%, -160%); /* Positioned slightly higher above seal */
+    transform: translate(-50%, -230%); /* Positioned slightly higher above seal */
 }
 
 .click-prompt-tooltip::after {

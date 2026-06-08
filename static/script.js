@@ -1,9 +1,38 @@
+// Coordinate to xy
+const SealLocator = {
+    // Math constants from Springdale & Grand Falls-Windsor
+    SCALE_X: 56.956070,
+    OFFSET_X: 3960.455054,
+    SCALE_Y: -83.078500,
+    OFFSET_Y: 5284.300196,
+
+    /**
+     * Translates geographical coordinates (Lat, Lon) into map pixel values (X, Y).
+     * @param {number} lat - Latitude of the point.
+     * @param {number} lon - Longitude of the point.
+     * @returns {{x: number, y: number}} - Pixel coordinates on the map canvas.
+     */
+    getPixels(lat, lon) {
+        return {
+            x: (this.SCALE_X * lon) + this.OFFSET_X,
+            y: (this.SCALE_Y * lat) + this.OFFSET_Y
+        };
+    }
+};
+
+
+// --- Seal Data (now using Lat/Lon instead of % X/Y) ---
 const sealsData = [
-    { id: "SEAL-209", x: 87, y: 81, population: 140, gender: "55M / 45F", age: "6 years", area: "3L (NAFO) - Avalon Peninsula", meal: "Capelin", otolith: 2.2 },
-    { id: "SEAL-540", x: 38, y: 28, population: 45,  gender: "30M / 70F", age: "2 years", area: "2H (NAFO) - Nain", meal: "Sand Lance", otolith: 0.8 },
-    { id: "SEAL-112", x: 42, y: 51, population: 90,  gender: "50M / 50F", age: "11 years", area: "2J (NAFO) - Goose Bay", meal: "Atlantic Cod", otolith: 3.5 },
-    { id: "SEAL-804", x: 62, y: 61, population: 15,  gender: "80M / 20F", age: "1 year", area: "4R (NAFO) - Northern Peninsula", meal: "Crustaceans", otolith: 0.4 },
-    { id: "SEAL-301", x: 70, y: 84, population: 110, gender: "45M / 55F", age: "8 years", area: "3Ps (NAFO) - Placentia Bay", meal: "Redfish", otolith: 1.9 }
+    // 3L (Avalon Peninsula) St. John's
+    { id: "SEAL-209", lat: 47.56, lon: -52.71, population: 140, gender: "55M / 45F", age: "6 years", area: "3L (NAFO) - Avalon Peninsula", meal: "Capelin", otolith: 2.2 },
+    // 2H (Nain) Nain
+    { id: "SEAL-540", lat: 56.54, lon: -61.69, population: 45,  gender: "30M / 70F", age: "2 years", area: "2H (NAFO) - Nain", meal: "Sand Lance", otolith: 0.8 },
+    // 2J (Goose Bay) Goose Bay
+    { id: "SEAL-112", lat: 53.30, lon: -60.33, population: 90,  gender: "50M / 50F", age: "11 years", area: "2J (NAFO) - Goose Bay", meal: "Atlantic Cod", otolith: 3.5 },
+    // 4R (Northern Peninsula) St. Anthony
+    { id: "SEAL-804", lat: 51.37, lon: -55.60, population: 15,  gender: "80M / 20F", age: "1 year", area: "4R (NAFO) - Northern Peninsula", meal: "Crustaceans", otolith: 0.4 },
+    // 3Ps (Placentia Bay) Placentia
+    { id: "SEAL-301", lat: 47.24, lon: -53.96, population: 110, gender: "45M / 55F", age: "8 years", area: "3Ps (NAFO) - Placentia Bay", meal: "Redfish", otolith: 1.9 }
 ];
 
 let viewport, canvas, clickPrompt;
@@ -24,7 +53,7 @@ function setupDragToPan() {
         e.preventDefault(); // Prevents default text selections and standard browser ghost dragging
     });
 
-    // Tracking globally on the window object prevents scroll locks if the cursor leaves the frame
+    // Stops scrolling when out of map
     window.addEventListener('mouseup', () => {
         if (isDragging) {
             isDragging = false;
@@ -52,9 +81,10 @@ function renderInterface() {
         const wrapper = document.createElement('div');
         wrapper.className = 'seal-icon-wrapper';
         
-        // Position relative to the fixed size of the map-canvas
-        wrapper.style.left = `${seal.x}%`;
-        wrapper.style.top = `${seal.y}%`;
+        // Position using pixel coordinates from SealLocator
+        const pixelCoords = SealLocator.getPixels(seal.lat, seal.lon);
+        wrapper.style.left = `${pixelCoords.x}px`;
+        wrapper.style.top = `${pixelCoords.y}px`;
 
         const baseSize = 40; 
         const scaleModifier = Math.min(Math.max(seal.population * 0.3, 10), 50);
@@ -93,15 +123,20 @@ function renderInterface() {
 // tooltip helper
 function positionHelperPrompt() {
     if (promptDismissed || sealsData.length === 0) return;
-    const viewCenterX = 50;
-    const viewCenterY = 50;
+
+    // Get canvas dimensions to find its center in pixels
+    const canvasWidth = canvas.offsetWidth;
+    const canvasHeight = canvas.offsetHeight;
+    const canvasCenterX = canvasWidth / 2;
+    const canvasCenterY = canvasHeight / 2;
 
     let closestSeal = null;
     let shortestDistance = Infinity;
 
     sealsData.forEach(seal => {
-        const dx = seal.x - viewCenterX;
-        const dy = seal.y - viewCenterY;
+        const pixelCoords = SealLocator.getPixels(seal.lat, seal.lon);
+        const dx = pixelCoords.x - canvasCenterX;
+        const dy = pixelCoords.y - canvasCenterY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < shortestDistance) {
             shortestDistance = distance;
@@ -110,8 +145,9 @@ function positionHelperPrompt() {
     });
 
     if (closestSeal && clickPrompt) {
-        clickPrompt.style.left = `${closestSeal.x}%`;
-        clickPrompt.style.top = `${closestSeal.y}%`;
+        const closestSealPixels = SealLocator.getPixels(closestSeal.lat, closestSeal.lon);
+        clickPrompt.style.left = `${closestSealPixels.x}px`;
+        clickPrompt.style.top = `${closestSealPixels.y}px`;
         clickPrompt.style.display = 'block';
     }
 }
@@ -150,7 +186,7 @@ function init() {
         setupDragToPan();
         renderInterface();
         
-        // Centered coordinates to frame Newfoundland properly upon load
+        // These are initial scroll positions in pixels for the map viewer
         viewport.scrollTop = 450; 
         viewport.scrollLeft = 150;
     }
