@@ -8,7 +8,7 @@
 body {
     background-color: #f5f6fa;
     color: #333;
-    overflow-y: scroll; /* Allows standard page scrolling */
+    overflow-y: scroll;
 }
 
 .page-container {
@@ -20,7 +20,6 @@ body {
     gap: 30px;
 }
 
-/* dotted boxes */
 .wireframe-box {
     background: white;
     border: 2px solid #ccc;
@@ -29,7 +28,6 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
 }
 
-/* Map and Side Panel */
 .header-box {
     margin-bottom: -10px;
 }
@@ -52,7 +50,6 @@ body {
     position: relative;
 }
 
-/* Container for map stuff */
 .map-outer {
     flex: 1;
     display: flex;
@@ -61,7 +58,6 @@ body {
     min-width: 0;
 }
 
-/* map title */
 .map-stationary-tab {
     background: #ffffff;
     border: 2px solid #ccc;
@@ -75,122 +71,33 @@ body {
     width: fit-content;
 }
 
-/* Map Viewport Container */
 .map-viewport {
     flex: 1;
     border: 2px solid #ccc;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
     border-top-right-radius: 8px;
-    overflow: auto; 
+    overflow: hidden; 
     position: relative;
     background-color: #cad2d3;
-    cursor: grab;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    
-    /* Hide default scrollbars */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
 }
 
-.map-viewport::-webkit-scrollbar {
-    display: none;
+.map-viewport > div {
+    height: 100% !important;
 }
 
-.map-viewport:active {
-    cursor: grabbing;
+.map-viewport > div > div {
+    height: 100% !important;
+    padding-bottom: 0 !important;
 }
 
-/* Map Canvas */
-.map-canvas {
-    width: 1145px;
-    height: 1600px; 
-    position: relative;
-    top: 0;
-    left: 0;
-    background-image: url('/static/images/NL%20Map.png'); 
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-/* canvas position */
-.seal-icon-wrapper {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    z-index: 10;
-}
-
-.seal-icon-image {
-    border: 2px solid #3498db;
-    background: white;
-    border-radius: 50%;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    transition: transform 0.2s ease;
-}
-
-.seal-icon-image:hover {
-    transform: scale(1.15);
-    border-color: #2ecc71;
-}
-
-.seal-icon-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    pointer-events: none; /* Prevents browser image drag interference */
-}
-
-.seal-label {
-    font-size: 11px;
-    font-weight: bold;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 1px 5px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    margin-top: 4px;
-    pointer-events: none; /* Prevents text selection interference */
-}
-
-/* Tooltip */
-.click-prompt-tooltip {
-    position: absolute;
-    background: #ffeaa7;
-    border: 2px solid #fdcb6e;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: bold;
-    color: #d63031;
-    pointer-events: none;
-    z-index: 100;
-    white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translate(-50%, -230%); /* Positioned slightly higher above seal */
-}
-
-.click-prompt-tooltip::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 10px 10px 0;
-    border-style: solid;
-    border-color: #fdcb6e transparent;
+.map-viewport iframe {
+    width: 100% !important;
+    height: 100% !important;
+    border: none;
     display: block;
-    width: 0;
 }
 
-/* Side Panel */
 .sidebar-panel {
     width: 360px;
     flex-shrink: 0;
@@ -198,21 +105,6 @@ body {
     overflow-y: auto;
 }
 
-
-.graph-placeholder {
-    background: #f1f2f6;
-    border: 1px dashed #aaa;
-    border-radius: 6px;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 10px 0;
-    color: #777;
-    font-size: 13px;
-}
-
-/* Index */
 .index-section {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -244,7 +136,6 @@ body {
     grid-row: 2 / 3;
 }
 
-/* Scrollable list of seals */
 .index-list {
     flex-grow: 1;
     overflow-y: auto;
@@ -265,7 +156,6 @@ body {
     background: #eef2f5;
 }
 
-/* Filters and inputs */
 .filter-grid {
     display: flex;
     gap: 10px;

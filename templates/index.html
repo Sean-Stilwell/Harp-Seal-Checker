@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seal Checker 9000</title>
+    <!-- Import Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=1.2">
 </head>
 <body>
@@ -23,20 +25,10 @@
 
         <!-- Seal Checker 9000 Map Section -->
         <div class="map-section">
-            
             <div class="map-outer">
-                <!-- Stationary detached title bar -->
                 <div class="map-stationary-tab">Map of 🦭</div>
-                
-                <!-- Viewport container -->
                 <div class="map-viewport" id="map-viewport">
-                    <div class="map-canvas" id="map-canvas">
-                        
-                        <!-- Tooltip prompt -->
-                        <div id="click-prompt" class="click-prompt-tooltip" style="display: none;">
-                            Click to activate slide in side bar
-                        </div>
-                    </div>
+                    {{ map_html | safe }}
                 </div>
             </div>
 
@@ -45,28 +37,35 @@
                 <h3 id="side-title">Select a Seal Marker</h3>
                 <hr style="margin: 10px 0;">
                 
-                <p><strong>Population:</strong> <span id="side-pop">-</span></p>
-                <p><strong>Gender Ratio:</strong> <span id="side-gender">-</span></p>
-                <p><strong>Age Ratio:</strong> <span id="side-age">-</span></p>
+                <p><strong>Area Population:</strong> <span id="side-pop">-</span></p>
+                <p><strong>Average Age:</strong> <span id="side-age">-</span></p>
 
-                <div class="graph-placeholder">Graph of Population, Gender & Age Ratio</div>
-                <div class="graph-placeholder">Pie/Bar graph of Stomach Content (# of Data points)</div>
-                <div class="graph-placeholder" style="height: 60px;">Comparison Mode (Bar Graph)</div>
-                <div class="graph-placeholder" style="height: 60px;">Calendar View?</div>
+                <!-- ChartJS Area Demographics -->
+                <div style="position: relative; margin-top: 20px;">
+                    <h4 style="font-size: 13px; color: #555; margin-bottom: 5px;">Demographic Profile</h4>
+                    <div style="height: 150px; position: relative;">
+                        <canvas id="ratioChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- ChartJS Stomach Content -->
+                <div style="position: relative; margin-top: 25px;">
+                    <h4 style="font-size: 13px; color: #555; margin-bottom: 5px;">Stomach Contents Proportion</h4>
+                    <div style="height: 140px; position: relative;">
+                        <canvas id="stomachChart"></canvas>
+                    </div>
+                    <div id="stomach-note" style="font-size: 11px; text-align: center; color: #666; margin-top: 8px;"></div>
+                </div>
             </div>
-
         </div>
 
-        <!-- Seal Index 10000 -->
+        <!-- Seal Index Section -->
         <div class="index-section">
-
-            <!-- Title -->
             <div class="wireframe-box index-header-left">
                 <h2>Seal Index 10000</h2>
                 <p style="color: #666; margin-top: 5px;">Search for Individual Seals</p>
             </div>
 
-            <!-- Filters -->
             <div class="wireframe-box index-header-right">
                 <div class="filter-grid">
                     <input type="text" placeholder="Search by ID...">
@@ -80,13 +79,12 @@
             <!-- Bottom Left: List Index -->
             <div class="wireframe-box index-body-left">
                 <h4>Index</h4>
-                <p style="color: #777; font-size: 12px; margin-bottom: 8px;">20 per page</p>
-                <div class="index-list" id="index-list-container">
-                </div>
+                <p style="color: #777; font-size: 12px; margin-bottom: 8px;">Dynamic Search List</p>
+                <div class="index-list" id="index-list-container"></div>
             </div>
 
             <!-- Bottom Right: Life Snapshot Details -->
-            <div class="index-body-right">
+            <div class="index-body-right wireframe-box">
                 <h3>Selected ID: <span id="detail-id">IDs</span></h3>
                 <hr style="margin: 10px 0;">                
                 <h4 style="margin-top: 10px;">"Life Snapshot"</h4>
@@ -96,30 +94,31 @@
                     <li><strong>Last Meal:</strong> <span id="detail-meal">-</span></li>
                 </ul>
 
-                <h4 style="margin-top: 15px;">Image</h4>
+                <h4 style="margin-top: 15px;">Image Visual Scale</h4>
                 <div class="infographic-showcase">
-                    <p style="font-size: 13px; color: #555;">
-                        Fish Size vs. Seal Size
+                    <p style="font-size: 13px; color: #555; margin-bottom: 5px;">
+                        Fish Size vs. Seal Size (Scaled by Otolith Mean)
                     </p>
                     <div style="display: flex; justify-content: center; align-items: center; gap: 30px; margin-top: 15px;">
                         <div>
                             <p style="font-size: 11px;">Seal Size</p>
-                            <span style="font-size: 32px;">🦭</span>
+                            <span style="font-size: 32px; display: inline-block;">🦭</span>
                         </div>
                         <div style="font-weight: bold; color: #999;">vs</div>
                         <div>
-                            <p style="font-size: 11px;">Prey Size</p>
+                            <p style="font-size: 11px;">Prey Otolith Size</p>
                             <span id="prey-visual" style="font-size: 24px; display: inline-block; transition: transform 0.3s;">🐟</span>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
-
     </div>
 
-    <!-- Link to the external JavaScript logic -->
+    <!-- Expose Python aggregated list as JS object -->
+    <script>
+        const sealsData = {{ seals_data | tojson | safe }};
+    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
