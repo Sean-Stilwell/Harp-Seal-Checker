@@ -28,7 +28,8 @@ def load_nafo_reference(filepath='static/images/NAFO_Divisions_2021.csv'):
         return {}
         
     try:
-        df = pd.read_csv(filepath)
+        # Added encoding='latin-1' to handle non-UTF-8 characters
+        df = pd.read_csv(filepath, encoding='latin-1')
         df.columns = [c.strip() for c in df.columns]
         
         # Identify columns
@@ -75,6 +76,8 @@ def parse_seals_csv(filepath='static/images/OPENDATA_HarpDietData2017-2021_EN.cs
             
     try:
         df = pd.read_csv(filepath)
+    except UnicodeDecodeError as e:
+        print(f"Pandas error: {e}") # Should not happen now
     except Exception as e:
         print(f"[DEBUG] Error reading CSV: {e}. Rendering mock dataset.")
         return get_mock_data()
@@ -123,7 +126,7 @@ def parse_seals_csv(filepath='static/images/OPENDATA_HarpDietData2017-2021_EN.cs
             if not pd.isna(raw_nafo) and str(raw_nafo).strip():
                 nafo = str(raw_nafo).strip()
                 
-        lat, lon, area_name = 47.56, -52.71, f"{nafo} (NAFO)" # default (fail)
+        lat, lon, area_name = 48.56, -52.71, f"{nafo} (NAFO)" # default (fail)
         
         nafo_upper = nafo.upper()
         nafo_clean = nafo_upper.replace('-', '').replace(' ', '')
