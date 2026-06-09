@@ -1,10 +1,44 @@
 import os
-import csv
 import pandas as pd
 import folium
 from flask import Flask, render_template
 
 app = Flask(__name__)
+
+#Blobbin
+AZURE_SAS_URI = "" #Put AZCopy Here :)
+SEALS_BLOB_NAME = "OPENDATA_HarpDietData2017-2021_EN.csv"
+NAFO_BLOB_NAME = "NAFO_Divisions_2021 (1).csv"
+
+
+def load_df_from_azure(blob_name, encoding='utf-8'):
+    """
+    Downloads a CSV file directly from Azure Blob Storage using the SAS URI
+    configured in the global variables or environment variables.
+    """
+    # Prefer global variable, fall back to environment variable
+    full_sas_uri = AZURE_SAS_URI or os.environ.get("AZURE_SAS_URI")
+
+    if not full_sas_uri:
+        print("[DEBUG] No AZURE_SAS_URI found in global variables or environment variables.")
+        return None
+
+    try:
+        # Build file path URL with the SAS token attached
+        if "?" in full_sas_uri:
+            base_uri, token = full_sas_uri.split("?", 1)
+            if not base_uri.endswith("/"):
+                base_uri += "/"
+            file_uri = f"{base_uri}{blob_name}?{token}"
+        else:
+            file_uri = f"{full_sas_uri}/{blob_name}" if not full_sas_uri.endswith("/") else f"{full_sas_uri}{blob_name}"
+        
+        # Load the CSV data from the URL
+        df = pd.read_csv(file_uri, encoding=encoding)
+        return df            
+    except Exception as e:
+        print(f"[DEBUG] Error loading {blob_name} from Azure Storage: {e}")
+        return None
 
 def find_col(df, options):
     for opt in options:
@@ -13,23 +47,19 @@ def find_col(df, options):
                 return col
     return None
 
-def get_mock_data():
-    return [
-        { "id": "Seal A", "lat": 47.56, "lon": -52.71, "gender": "F", "age": "26 years", "age_num": 26, "area": "3L (NAFO) - Avalon Peninsula", "nafo_zone": "3LB", "meal": "Cod, Atlant", "otolith": 4.78, "prey_contents": {"Cod, Atlant": 1}, "total_prey_items": 1 },
-        { "id": "Seal B", "lat": 49.80, "lon": -54.50, "gender": "F", "age": "2 years", "age_num": 2, "area": "3K (NAFO) - Northeast Coast", "nafo_zone": "3KI", "meal": "Capelin", "otolith": 2.22, "prey_contents": {"Capelin": 11, "Cod, Arctic": 4, "Herring": 1}, "total_prey_items": 16 },
-        { "id": "Seal C", "lat": 50.40, "lon": -55.20, "gender": "F", "age": "15 years", "age_num": 15, "area": "3K (NAFO) - Northeast Coast", "nafo_zone": "3KH", "meal": "Snailfish", "otolith": 1.39, "prey_contents": {"Snailfish": 38, "Capelin": 7, "Herring": 1}, "total_prey_items": 46 },
-        { "id": "Seal D", "lat": 50.40, "lon": -55.20, "gender": "F", "age": "1 year", "age_num": 1, "area": "3K (NAFO) - Northeast Coast", "nafo_zone": "3KH", "meal": "Capelin", "otolith": 4.82, "prey_contents": {"Capelin": 7, "Cod, Atlant": 11}, "total_prey_items": 18 },
-        { "id": "Seal E", "lat": 49.80, "lon": -54.50, "gender": "M", "age": "27 years", "age_num": 27, "area": "3K (NAFO) - Northeast Coast", "nafo_zone": "3KI", "meal": "Shrimp, Unidentified", "otolith": 1.0, "prey_contents": {"Shrimp, Unidentified": 1}, "total_prey_items": 1 }
-    ]
-
-def load_nafo_reference(filepath='static/images/NAFO_Divisions_2021.csv'):
-    if not os.path.exists(filepath):
-        print(f"[DEBUG] NAFO divisions reference file not found at '{filepath}'. Using default fallbacks.")
+def load_nafo_reference():
+    # Try loading from Azure Storage first
+    df = load_df_from_azure(
+        blob_name=NAFO_BLOB_NAME, 
+        encoding='latin-1'
+    )
+    
+    # If Azure loading fails, return an empty reference map
+    if df is None:
+        print("[DEBUG] Azure load failed for NAFO reference. Returning empty reference map.")
         return {}
         
     try:
-        # Added encoding='latin-1' to handle non-UTF-8 characters
-        df = pd.read_csv(filepath, encoding='latin-1')
         df.columns = [c.strip() for c in df.columns]
         
         # Identify columns
@@ -57,33 +87,25 @@ def load_nafo_reference(filepath='static/images/NAFO_Divisions_2021.csv'):
             
         return nafo_map
     except Exception as e:
-        print(f"[DEBUG] Error loading NAFO reference file: {e}")
+        print(f"[DEBUG] Error parsing NAFO reference: {e}")
         return {}
 
-def parse_seals_csv(filepath='static/images/OPENDATA_HarpDietData2017-2021_EN.csv'):
-    # Try to find target CSV or fallback to any CSV in current directory
-    if not os.path.exists(filepath):
-        csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
-        if csv_files:
-            filepath = csv_files[0]
-            print(f"[DEBUG] Target CSV not found at '{filepath}'. Loaded fallback seals source: {filepath}")
-        else:
-            print("[DEBUG] Target CSV not found. Rendering built-in mock dataset.")
-            return get_mock_data()
-            
+def parse_seals_csv():
     # Load NAFO Divisions reference file and compute centroids
-    nafo_map = load_nafo_reference('static/images/NAFO_Divisions_2021.csv')
-            
-    try:
-        df = pd.read_csv(filepath)
-    except UnicodeDecodeError as e:
-        print(f"Pandas error: {e}") # Should not happen now
-    except Exception as e:
-        print(f"[DEBUG] Error reading CSV: {e}. Rendering mock dataset.")
-        return get_mock_data()
+    nafo_map = load_nafo_reference()
+    
+    # Try loading from Azure Storage first
+    df = load_df_from_azure(
+        blob_name=SEALS_BLOB_NAME
+    )
+    
+    # If Azure loading fails, return an empty list
+    if df is None:
+        print("[DEBUG] Azure load failed for seals CSV. Returning empty dataset.")
+        return []
         
     df.columns = [c.strip() for c in df.columns]
-    
+
     # Locate column handles case-insensitively
     id_col = find_col(df, ['sealid', 'seal_id', 'id', 'seal'])
     sex_col = find_col(df, ['sex', 'gender', 's'])
@@ -93,8 +115,8 @@ def parse_seals_csv(filepath='static/images/OPENDATA_HarpDietData2017-2021_EN.cs
     num_col = find_col(df, ['numberofl', 'quantity', 'count', 'num_prey', 'number'])
     
     if not id_col:
-        print("[DEBUG] 'SealID' column absent. Rendering mock dataset.")
-        return get_mock_data()
+        print("[DEBUG] 'SealID' column absent. Returning empty dataset.")
+        return []
         
     df[id_col] = df[id_col].astype(str).str.strip()
     grouped = df.groupby(id_col)
@@ -225,7 +247,7 @@ def parse_seals_csv(filepath='static/images/OPENDATA_HarpDietData2017-2021_EN.cs
 
 @app.route('/')
 def home():
-    seals = parse_seals_csv('static/images/OPENDATA_HarpDietData2017-2021_EN.csv')
+    seals = parse_seals_csv()
     
     if seals:
         avg_lat = sum(s['lat'] for s in seals) / len(seals)
@@ -234,7 +256,7 @@ def home():
     else:
         m = folium.Map(location=[50.5, -56.5], zoom_start=5, control_scale=True)
     
-    # Group seals by NAFO zone to represent markers on the map (exactly one marker per unique NAFO zone)
+    # Group seals by NAFO zone to represent markers on the map
     nafo_groups = {}
     for seal in seals:
         zone = seal['nafo_zone']
@@ -244,12 +266,10 @@ def home():
         
     for zone, group in nafo_groups.items():
         base_size = 35
-        # Total stomach content
         total_prey_in_group = sum(s["total_prey_items"] for s in group)
         scale_modifier = min(max(total_prey_in_group * 0.3, 5), 30)
         size = int(base_size + scale_modifier)
         
-        # Coordinates for the NAFO zone centroid
         lat = group[0]['lat']
         lon = group[0]['lon']
         area_name = group[0]['area']
@@ -304,4 +324,4 @@ def home():
     return render_template('index.html', map_html=map_html, seals_data=seals)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
