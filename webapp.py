@@ -5,24 +5,20 @@ from flask import Flask, render_template
 
 app = Flask(__name__)
 
-#Blobbin
-AZURE_SAS_URI = "" #Put AZCopy Here :)
-SEALS_BLOB_NAME = "OPENDATA_HarpDietData2017-2021_EN.csv"
-NAFO_BLOB_NAME = "NAFO_Divisions_2021 (1).csv"
+# Blobbin
+# Add AzCopy Here vvvvv
+AZURE_SAS_URI = ""
+SEALS_BLOB_NAME = "static/OPENDATA_HarpDietData2017-2021_EN.csv"
+NAFO_BLOB_NAME = "static/NAFO-Subdivision-General-Coordinates.csv"
+ICON_BLOB_NAME = "static/Seal-Icon.png"
 
 
 def load_df_from_azure(blob_name, encoding='utf-8'):
-    """
-    Downloads a CSV file directly from Azure Blob Storage using the SAS URI
-    configured in the global variables or environment variables.
-    """
-    # Prefer global variable, fall back to environment variable
-    full_sas_uri = AZURE_SAS_URI or os.environ.get("AZURE_SAS_URI")
-
+    # Retrieve directly from AZURE_SAS_URI without environment fallback
+    full_sas_uri = AZURE_SAS_URI
     if not full_sas_uri:
-        print("[DEBUG] No AZURE_SAS_URI found in global variables or environment variables.")
+        print("[DEBUG] AZURE_SAS_URI is not set.")
         return None
-
     try:
         # Build file path URL with the SAS token attached
         if "?" in full_sas_uri:
@@ -32,10 +28,8 @@ def load_df_from_azure(blob_name, encoding='utf-8'):
             file_uri = f"{base_uri}{blob_name}?{token}"
         else:
             file_uri = f"{full_sas_uri}/{blob_name}" if not full_sas_uri.endswith("/") else f"{full_sas_uri}{blob_name}"
-        
-        # Load the CSV data from the URL
         df = pd.read_csv(file_uri, encoding=encoding)
-        return df            
+        return df
     except Exception as e:
         print(f"[DEBUG] Error loading {blob_name} from Azure Storage: {e}")
         return None
@@ -45,49 +39,46 @@ def find_col(df, options):
         for col in df.columns:
             if col.strip().lower() == opt.lower():
                 return col
+    for opt in options:
+        for col in df.columns:
+            cleaned_col = col.strip().lower()
+            cleaned_opt = opt.lower()
+            if cleaned_opt in cleaned_col or cleaned_col in cleaned_opt:
+                return col
     return None
 
 def load_nafo_reference():
-    # Try loading from Azure Storage first
-    df = load_df_from_azure(
-        blob_name=NAFO_BLOB_NAME, 
-        encoding='latin-1'
-    )
-    
-    # If Azure loading fails, return an empty reference map
-    if df is None:
-        print("[DEBUG] Azure load failed for NAFO reference. Returning empty reference map.")
-        return {}
-        
     try:
-        df.columns = [c.strip() for c in df.columns]
+        # Load the NAFO Coordinates from blob
+        df = load_df_from_azure(NAFO_BLOB_NAME)
+        if df is None:
+            print("[DEBUG] Azure load failed for NAFO reference CSV.")
+            return {}
+
+        df.columns = [c.strip().replace('\ufeff', '') for c in df.columns]
         
-        # Identify columns
-        div_col = find_col(df, ['label', 'nafo_divis', 'nafo_sub/', 'nafo', 'zone', 'code'])
-        lat_col = find_col(df, ['lat_dd', 'latitude', 'lat', 'y'])
-        lon_col = find_col(df, ['long_dd', 'longitude', 'lon', 'lng', 'x'])
-        name_col = find_col(df, ['name', 'area', 'description', 'areaname'])
-        
-        if not div_col: div_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
-        if not lat_col: lat_col = find_col(df, ['latitude', 'lat']) or df.columns[-5]
-        if not lon_col: lon_col = find_col(df, ['longitude', 'lon', 'lng']) or df.columns[-4]
+        # Match layout parameters
+        div_col = find_col(df, ['zone'])
+        lat_col = find_col(df, ['lat'])
+        lon_col = find_col(df, ['long'])
         
         nafo_map = {}
-        grouped = df.groupby(div_col)
-        for div_val, group in grouped:
-            div_clean = str(div_val).strip().upper()
-            try:
-                lat_val = float(group[lat_col].mean())
-                lon_val = float(group[lon_col].mean())
-            except:
-                continue
-                
-            name_val = str(group[name_col].iloc[0]).strip() if name_col and not pd.isna(group[name_col].iloc[0]) else f"{div_clean} (NAFO)"
-            nafo_map[div_clean] = (lat_val, lon_val, name_val)
+        if div_col and lat_col and lon_col:
+            grouped = df.groupby(div_col)
+            for div_val, group in grouped:
+                div_clean = str(div_val).strip().upper()
+                try:
+                    lat_val = float(group[lat_col].mean())
+                    lon_val = float(group[lon_col].mean())
+                except:
+                    continue
+                    
+                name_val = f"{div_clean} (NAFO)"
+                nafo_map[div_clean] = (lat_val, lon_val, name_val)
             
         return nafo_map
     except Exception as e:
-        print(f"[DEBUG] Error parsing NAFO reference: {e}")
+        print(f"Error processing NAFO reference CSV: {e}")
         return {}
 
 def parse_seals_csv():
@@ -106,13 +97,12 @@ def parse_seals_csv():
         
     df.columns = [c.strip() for c in df.columns]
 
-    # Locate column handles case-insensitively
-    id_col = find_col(df, ['sealid', 'seal_id', 'id', 'seal'])
-    sex_col = find_col(df, ['sex', 'gender', 's'])
-    age_col = find_col(df, ['age', 'a'])
-    nafo_col = find_col(df, ['nafo', 'nafo_zone', 'nafo_division', 'location', 'area'])
-    prey_col = find_col(df, ['prey', 'prey_name', 'food', 'preycode'])
-    num_col = find_col(df, ['numberofl', 'quantity', 'count', 'num_prey', 'number'])
+    id_col = find_col(df, ['sealid'])
+    sex_col = find_col(df, ['sex'])
+    age_col = find_col(df, ['age'])
+    nafo_col = find_col(df, ['nafo'])
+    prey_col = find_col(df, ['prey'])
+    num_col = find_col(df, ['numberoflineitems'])
     
     if not id_col:
         print("[DEBUG] 'SealID' column absent. Returning empty dataset.")
@@ -148,7 +138,8 @@ def parse_seals_csv():
             if not pd.isna(raw_nafo) and str(raw_nafo).strip():
                 nafo = str(raw_nafo).strip()
                 
-        lat, lon, area_name = 48.56, -52.71, f"{nafo} (NAFO)" # default (fail)
+        # Default fallback to Newfoundland and Labrador centroid (instead of Ottawa)
+        lat, lon, area_name = 50.5, -56.5, f"{nafo} (NAFO)"
         
         nafo_upper = nafo.upper()
         nafo_clean = nafo_upper.replace('-', '').replace(' ', '')
@@ -185,6 +176,7 @@ def parse_seals_csv():
         for _, row in group.iterrows():
             if prey_col:
                 prey_val = row[prey_col]
+                # '9998' and 'empty' correctly represent empty stomachs
                 if pd.isna(prey_val) or str(prey_val).strip() == '' or str(prey_val).lower() == 'empty' or 'empty' in str(prey_val).lower() or '9998' in str(prey_val):
                     continue
                     
@@ -212,14 +204,9 @@ def parse_seals_csv():
             
         # Parse Otolith size mean
         otolith_val = None
-        part_cols = [c for c in group.columns if 'partmeasur' in c.lower()]
-        if len(part_cols) > 1:
+        part_cols = [c for c in group.columns if 'partmeasur' in c.lower() or 'otolith' in c.lower() or 'size' in c.lower()]
+        if part_cols:
             ot_col = part_cols[-1]
-            otolith_series = pd.to_numeric(group[ot_col], errors='coerce').dropna()
-            if not otolith_series.empty:
-                otolith_val = round(float(otolith_series.mean()), 2)
-        elif len(group.columns) > 18:
-            ot_col = group.columns[18]
             otolith_series = pd.to_numeric(group[ot_col], errors='coerce').dropna()
             if not otolith_series.empty:
                 otolith_val = round(float(otolith_series.mean()), 2)
@@ -252,10 +239,21 @@ def home():
     if seals:
         avg_lat = sum(s['lat'] for s in seals) / len(seals)
         avg_lon = sum(s['lon'] for s in seals) / len(seals)
-        m = folium.Map(location=[avg_lat, avg_lon], zoom_start=5, control_scale=True)
+        m = folium.Map(location=[avg_lat, avg_lon], zoom_start=5, control_scale=True, world_copy_jump=True)
     else:
-        m = folium.Map(location=[50.5, -56.5], zoom_start=5, control_scale=True)
+        m = folium.Map(location=[50.5, -56.5], zoom_start=5, control_scale=True, world_copy_jump=True)
     
+    # Generate the Azure SAS URL directly for the seal icon
+    full_sas_uri = AZURE_SAS_URI
+    
+    if "?" in full_sas_uri:
+        base_uri, token = full_sas_uri.split("?", 1)
+        if not base_uri.endswith("/"):
+            base_uri += "/"
+        icon_url = f"{base_uri}{ICON_BLOB_NAME}?{token}"
+    else:
+        icon_url = f"{full_sas_uri}/{ICON_BLOB_NAME}" if not full_sas_uri.endswith("/") else f"{full_sas_uri}{ICON_BLOB_NAME}"
+
     # Group seals by NAFO zone to represent markers on the map
     nafo_groups = {}
     for seal in seals:
@@ -264,15 +262,25 @@ def home():
             nafo_groups[zone] = []
         nafo_groups[zone].append(seal)
         
+    # Find the maximum group size to scale sizes relatively
+    max_group_size = max(len(g) for g in nafo_groups.values()) if nafo_groups else 1
+    if max_group_size == 0:
+        max_group_size = 1
+
+    # Define linear bounds for scaling
+    min_size = 30  # Minimum marker width (for small groups)
+    max_size = 75  # Maximum marker width (for the largest group)
+    size_range = max_size - min_size
+
     for zone, group in nafo_groups.items():
-        base_size = 35
-        total_prey_in_group = sum(s["total_prey_items"] for s in group)
-        scale_modifier = min(max(total_prey_in_group * 0.3, 5), 30)
-        size = int(base_size + scale_modifier)
+        num_seals_in_group = len(group)
+        
+        # Linear scaling relative to the maximum group size
+        ratio = num_seals_in_group / max_group_size
+        size = int(min_size + (ratio * size_range))
         
         lat = group[0]['lat']
         lon = group[0]['lon']
-        area_name = group[0]['area']
         
         icon_html = f"""
         <div onclick="window.parent.selectSealFromMap('{zone}'); event.stopPropagation();" style="
@@ -292,7 +300,7 @@ def home():
                 box-shadow: 0 4px 10px rgba(0,0,0,0.15);
                 transition: transform 0.2s ease, border-color 0.2s ease;
             " onmouseover="this.style.transform='scale(1.15)'; this.style.borderColor='#2ecc71';" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='#3498db';">
-                <img src="/static/images/Seal%20Icon.png" style="width: 100%; height: 100%; object-fit: cover;" alt="seal">
+                <img src="{icon_url}" style="width: 100%; height: 100%; object-fit: cover;" alt="seal">
             </div>
             <div style="
                 font-size: 10px;

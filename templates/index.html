@@ -48,10 +48,17 @@
                     </div>
                 </div>
 
+                <!-- ChartJS Age Distribution -->
+                <div style="position: relative; margin-top: 25px;">
+                    <h4 style="font-size: 13px; color: #555; margin-bottom: 5px;">Age Distribution (Zone)</h4>
+                    <div style="height: 140px; position: relative;">
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                </div>
                 <!-- ChartJS Stomach Content -->
                 <div style="position: relative; margin-top: 25px;">
                     <h4 style="font-size: 13px; color: #555; margin-bottom: 5px;">Stomach Contents Proportion</h4>
-                    <div style="height: 140px; position: relative;">
+                    <div style="height: 1000px; position: relative;"> 
                         <canvas id="stomachChart"></canvas>
                     </div>
                     <div id="stomach-note" style="font-size: 11px; text-align: center; color: #666; margin-top: 8px;"></div>
@@ -89,6 +96,7 @@
                 <hr style="margin: 10px 0;">                
                 <h4 style="margin-top: 10px;">"Life Snapshot"</h4>
                 <ul style="margin: 8px 20px; line-height: 1.6;">
+                    <li><strong>Sex:</strong> <span id="detail-gender">-</span></li>
                     <li><strong>Age:</strong> <span id="detail-age">-</span></li>
                     <li><strong>Found:</strong> <span id="detail-location">-</span></li>
                     <li><strong>Last Meal:</strong> <span id="detail-meal">-</span></li>

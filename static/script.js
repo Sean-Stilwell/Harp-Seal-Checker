@@ -1,14 +1,10 @@
 // Globally-exposed callback for the Folium map within the iframe
 window.selectSealFromMap = function(zoneCode) {
-    if (typeof sealsData !== 'undefined') {
-        const seal = sealsData.find(s => s.nafo_zone === zoneCode);
-        if (seal) {
-            selectSeal(seal);
-        }
-    }
+    selectZone(zoneCode);
 };
 
 let ratioChartInstance = null;
+let ageChartInstance = null;
 let stomachChartInstance = null;
 
 // Populate list index
@@ -30,7 +26,160 @@ function renderInterfaceFiltered(filteredList) {
     }
 }
 
-// Update sidebar panel contents and charts
+// Dynamically partition age values into 3-year groupings for active seals
+function getAgeDistribution(sealsList) {
+    let maxAge = 0;
+    sealsData.forEach(s => {
+        if (s.age_num !== null && s.age_num !== undefined && s.age_num > maxAge) {
+            maxAge = s.age_num;
+        }
+    });
+    // Fallback if maxAge is not found
+    if (maxAge === 0) maxAge = 21;
+
+    const bins = [];
+    // Generate uniform 3-year range objects based on the maximum age in the active selection
+    for (let i = 0; i <= maxAge; i += 3) {
+        bins.push({
+            label: `${i}-${i+2}`,
+            min: i,
+            max: i+2,
+            count: 0
+        });
+    }
+    const unknownBin = {
+        label: 'Unknown',
+        count: 0
+    };
+
+    sealsList.forEach(s => {
+        const age = s.age_num;
+        if (age === null || age === undefined) {
+            unknownBin.count++;
+        } else {
+            let placed = false;
+            for (let b of bins) {
+                if (age >= b.min && age <= b.max) {
+                    b.count++;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed && bins.length > 0) {
+                bins[bins.length - 1].count++;
+            }
+        }
+    });
+
+    const labels = bins.map(b => b.label).concat([unknownBin.label]);
+    const counts = bins.map(b => b.count).concat([unknownBin.count]);
+
+    return { labels, counts };
+}
+
+// Update sidebar panel contents and charts with aggregated data for a NAFO Zone
+function selectZone(zoneCode) {
+    if (typeof sealsData === 'undefined' || sealsData.length === 0) return;
+
+    // Filter seals by nafo_zone
+    const zoneSeals = sealsData.filter(s => s.nafo_zone === zoneCode);
+    if (zoneSeals.length === 0) return;
+
+    // 1. Update Title and Statistics
+    const titleEl = document.getElementById('side-title');
+    if (titleEl) titleEl.innerText = `${zoneCode} Zone Profile`;
+    
+    const totalCount = zoneSeals.length;
+    
+    let males = 0, females = 0, unknowns = 0;
+    let ageSum = 0;
+    let ageCount = 0;
+    let otolithSum = 0;
+    let otolithCount = 0;
+    
+    const aggregatedPrey = {};
+    let totalPreyCount = 0;
+    
+    zoneSeals.forEach(s => {
+        // Demographics
+        if (s.gender === 'M') males++;
+        else if (s.gender === 'F') females++;
+        else unknowns++;
+        
+        if (s.age_num !== null && s.age_num !== undefined) {
+            ageSum += s.age_num;
+            ageCount++;
+        }
+
+        if (s.otolith !== null && s.otolith !== undefined) {
+            otolithSum += s.otolith;
+            otolithCount++;
+        }
+
+        // Aggregate prey across all seals in this zone
+        if (s.prey_contents) {
+            for (const [prey, count] of Object.entries(s.prey_contents)) {
+                aggregatedPrey[prey] = (aggregatedPrey[prey] || 0) + count;
+                totalPreyCount += count;
+            }
+        }
+    });
+    
+    const avgAge = ageCount > 0 ? (ageSum / ageCount).toFixed(1) : 'N/A';
+    const avgOtolith = otolithCount > 0 ? (otolithSum / otolithCount) : 1.0;
+    
+    const popEl = document.getElementById('side-pop');
+    if (popEl) popEl.innerText = `${totalCount} Seals`;
+
+    const ageEl = document.getElementById('side-age');
+    if (ageEl) ageEl.innerText = `${avgAge} yrs (Average)`;
+
+    // Determine overall dominant meal in the zone
+    let dominantMeal = 'Empty';
+    if (Object.keys(aggregatedPrey).length > 0) {
+        let maxCount = -1;
+        for (const [prey, count] of Object.entries(aggregatedPrey)) {
+            if (prey !== 'Empty' && count > maxCount) {
+                maxCount = count;
+                dominantMeal = prey;
+            }
+        }
+    }
+
+    // 2. Update Bottom Snapshot details with Zone aggregates
+    const detailIdEl = document.getElementById('detail-id');
+    if (detailIdEl) detailIdEl.innerText = `${zoneCode} Zone (Aggregated)`;
+    
+    const detailGenderEl = document.getElementById('detail-gender');
+    if (detailGenderEl) detailGenderEl.innerText = `M: ${males} / F: ${females} / U: ${unknowns}`;
+
+    const detailAgeEl = document.getElementById('detail-age');
+    if (detailAgeEl) detailAgeEl.innerText = `${avgAge} years (Avg)`;
+
+    const detailLocEl = document.getElementById('detail-location');
+    if (detailLocEl) detailLocEl.innerText = zoneSeals[0].area;
+
+    const detailMealEl = document.getElementById('detail-meal');
+    if (detailMealEl) detailMealEl.innerText = dominantMeal;
+
+    const preyVisual = document.getElementById('prey-visual');
+    if (preyVisual) {
+        const scale = Math.min(Math.max(avgOtolith * 0.4, 0.5), 3.0);
+        preyVisual.style.transform = `scale(${scale})`;
+    }
+
+    // 3. Update Demographic Profile
+    updateDemographicsChart(males, females, unknowns);
+
+    // 4. Update Age Distribution Bar Chart (grouped dynamically by 3 years)
+    const ageData = getAgeDistribution(zoneSeals);
+    updateAgeChart(ageData.labels, ageData.counts);
+
+    // 5. Update Stomach Contents Chart with aggregated data
+    updateStomachChart(aggregatedPrey, totalPreyCount);
+}
+
+// Update sidebar panel contents and charts for an individual seal
 function selectSeal(seal) {
     // 1. Update Profile Information Texts
     const titleEl = document.getElementById('side-title');
@@ -60,9 +209,6 @@ function selectSeal(seal) {
     const popEl = document.getElementById('side-pop');
     if (popEl) popEl.innerText = `${totalCount} Seals`;
 
-    const genderEl = document.getElementById('side-gender');
-    if (genderEl) genderEl.innerText = `M: ${males} / F: ${females} / U: ${unknowns}`;
-
     const ageEl = document.getElementById('side-age');
     if (ageEl) ageEl.innerText = `${avgAge} yrs (Average)`;
 
@@ -70,6 +216,12 @@ function selectSeal(seal) {
     const detailIdEl = document.getElementById('detail-id');
     if (detailIdEl) detailIdEl.innerText = seal.id;
     
+    const detailGenderEl = document.getElementById('detail-gender');
+    if (detailGenderEl) {
+        const genderDisplay = seal.gender === 'M' ? 'Male' : seal.gender === 'F' ? 'Female' : 'Unknown';
+        detailGenderEl.innerText = genderDisplay;
+    }
+
     const detailAgeEl = document.getElementById('detail-age');
     if (detailAgeEl) detailAgeEl.innerText = seal.age;
 
@@ -86,10 +238,14 @@ function selectSeal(seal) {
         preyVisual.style.transform = `scale(${scale})`;
     }
 
-    // 3. Update Gender Pie Chart
+    // 3. Update Demographic Profile
     updateDemographicsChart(males, females, unknowns);
 
-    // 4. Update Stomach Contents Chart
+    // 4. Update Age Distribution Bar Chart (grouped dynamically by 3 years for context subdivision)
+    const ageData = getAgeDistribution(areaSeals);
+    updateAgeChart(ageData.labels, ageData.counts);
+
+    // 5. Update Stomach Contents Chart
     updateStomachChart(seal.prey_contents, seal.total_prey_items);
 }
 
@@ -98,7 +254,6 @@ function updateDemographicsChart(males, females, unknowns) {
     const ctx = document.getElementById('ratioChart');
     if (!ctx) return;
 
-    // Fallback if Chart.js fails to load due to CDN drop
     if (typeof Chart === 'undefined') {
         ctx.parentElement.innerHTML = `<div style="padding:15px; font-size:12px; color:#666; background:#fafafa; border:1px dashed #ccc; border-radius:4px;">Gender Profile: Males: ${males}, Females: ${females}, Unknowns: ${unknowns}</div>`;
         return;
@@ -138,6 +293,59 @@ function updateDemographicsChart(males, females, unknowns) {
                         boxWidth: 10,
                         font: { size: 10 }
                     }
+                }
+            }
+        }
+    });
+}
+
+// Draw age distribution as a Bar Chart
+function updateAgeChart(labels, counts) {
+    const ctx = document.getElementById('ageChart');
+    if (!ctx) return;
+
+    if (typeof Chart === 'undefined') {
+        let textFallback = labels.map((l, idx) => `${l}: ${counts[idx]}`).join(', ');
+        ctx.parentElement.innerHTML = `<div style="padding:15px; font-size:12px; color:#666; background:#fafafa; border:1px dashed #ccc; border-radius:4px;">Age Groups: ${textFallback}</div>`;
+        return;
+    }
+
+    if (ageChartInstance) {
+        ageChartInstance.destroy();
+    }
+
+    ageChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Seals Count',
+                data: counts,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        font: { size: 9 }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 9 }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
                 }
             }
         }
@@ -205,10 +413,12 @@ function updateStomachChart(preyContents, totalPreyItems) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'bottom',
+                    align: 'start',
                     labels: {
                         boxWidth: 8,
-                        font: { size: 9 }
+                        font: { size: 10 },
+                        padding : 6
                     }
                 }
             }
