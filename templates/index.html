@@ -32,9 +32,9 @@
                 </div>
             </div>
 
-            <!-- Side Panel -->
+            <!-- Side Panel (NAFO Zone Aggregations) -->
             <div class="wireframe-box sidebar-panel">
-                <h3 id="side-title">Select a Seal Marker</h3>
+                <h3 id="side-title">Select a Zone on the Map</h3>
                 <hr style="margin: 10px 0;">
                 
                 <p><strong>Area Population:</strong> <span id="side-pop">-</span></p>
@@ -55,12 +55,13 @@
                         <canvas id="ageChart"></canvas>
                     </div>
                 </div>
-                <!-- ChartJS Stomach Content -->
+                <!-- ChartJS Zone Stomach Content -->
                 <div style="position: relative; margin-top: 25px;">
                     <h4 style="font-size: 13px; color: #555; margin-bottom: 5px;">Stomach Contents Proportion</h4>
-                    <div style="height: 1000px; position: relative;"> 
+                    <div style="height: 220px; position: relative; width: 100%;"> 
                         <canvas id="stomachChart"></canvas>
                     </div>
+                    <div id="stomach-legend-container" style="max-height: 180px; overflow-y: auto; margin-top: 12px; padding: 8px; font-size: 11px; border: 1px dashed #ccc; border-radius: 4px; background: #fafafa;"></div>
                     <div id="stomach-note" style="font-size: 11px; text-align: center; color: #666; margin-top: 8px;"></div>
                 </div>
             </div>
@@ -86,13 +87,14 @@
             <!-- Bottom Left: List Index -->
             <div class="wireframe-box index-body-left">
                 <h4>Index</h4>
-                <p style="color: #777; font-size: 12px; margin-bottom: 8px;">Dynamic Search List</p>
+                <!-- Dynamic Results Count element -->
+                <p id="search-results-count" style="color: #777; font-size: 12px; margin-bottom: 8px; font-weight: bold;"></p>
                 <div class="index-list" id="index-list-container"></div>
             </div>
 
             <!-- Bottom Right: Life Snapshot Details -->
-            <div class="index-body-right wireframe-box">
-                <h3>Selected ID: <span id="detail-id">IDs</span></h3>
+            <div class="index-body-right wireframe-box" style="overflow-y: auto;">
+                <h3>Selected ID: <span id="detail-id">None Selected</span></h3>
                 <hr style="margin: 10px 0;">                
                 <h4 style="margin-top: 10px;">"Life Snapshot"</h4>
                 <ul style="margin: 8px 20px; line-height: 1.6;">
@@ -119,6 +121,14 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Individual Stomach Content Chart (Coupled with Selection) -->
+                <h4 style="margin-top: 25px;">Individual Stomach Content Distribution</h4>
+                <div style="height: 150px; position: relative; margin-top: 8px; width: 100%;">
+                    <canvas id="detailStomachChart"></canvas>
+                </div>
+                <div id="detail-stomach-legend-container" style="max-height: 120px; overflow-y: auto; margin-top: 10px; padding: 6px; font-size: 10px; border: 1px dashed #ccc; border-radius: 4px; background: #fafafa;"></div>
+                <div id="detail-stomach-note" style="font-size: 10px; text-align: center; color: #666; margin-top: 8px;"></div>
             </div>
         </div>
     </div>
@@ -127,6 +137,9 @@
     <script>
         const sealsData = {{ seals_data | tojson | safe }};
     </script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/global.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

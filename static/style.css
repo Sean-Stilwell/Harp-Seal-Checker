@@ -129,6 +129,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 450px;
+    height: 100%; 
 }
 
 .index-body-right {
@@ -139,10 +140,10 @@ body {
 .index-list {
     flex-grow: 1;
     overflow-y: auto;
-    max-height: 380px;
     border: 1px solid #ddd;
     border-radius: 4px;
     background: #fafafa;
+    height: 0; 
 }
 
 .index-list-item {
