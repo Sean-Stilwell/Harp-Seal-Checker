@@ -247,7 +247,7 @@ def home():
     # Generate the Azure SAS URL directly for the seal icon
     full_sas_uri = AZURE_SAS_URI
     
-    if "?" in full_sas_uri: //sas uri missing
+    if "?" in full_sas_uri: # is sas uri missing
         base_uri, token = full_sas_uri.split("?", 1)
         if not base_uri.endswith("/"):
             base_uri += "/"
