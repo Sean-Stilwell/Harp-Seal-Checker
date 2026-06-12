@@ -7,7 +7,9 @@ app = Flask(__name__)
 
 # Blobbin
 # Add AzCopy Here vvvvv
-AZURE_SAS_URI = ""
+AZURE_SAS_URI = os.environ.get("SAS")
+if not full_sas_uri:
+    print("[DEBUG] SAS environment variable is not set.")
 SEALS_BLOB_NAME = "static/OPENDATA_HarpDietData2017-2021_EN.csv"
 NAFO_BLOB_NAME = "static/NAFO-Subdivision-General-Coordinates.csv"
 ICON_BLOB_NAME = "static/Seal-Icon.png"
