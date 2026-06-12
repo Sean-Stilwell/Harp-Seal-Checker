@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 5000  
  
 # Command to run the app when the container starts  
-CMD ["python", "webapp.py"]  
+CMD ["python", "app.py"]  
