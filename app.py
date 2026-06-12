@@ -8,8 +8,6 @@ app = Flask(__name__)
 # Blobbin
 # Add AzCopy Here vvvvv
 AZURE_SAS_URI = os.environ.get("SAS")
-if not full_sas_uri:
-    print("[DEBUG] SAS environment variable is not set.")
 SEALS_BLOB_NAME = "static/OPENDATA_HarpDietData2017-2021_EN.csv"
 NAFO_BLOB_NAME = "static/NAFO-Subdivision-General-Coordinates.csv"
 ICON_BLOB_NAME = "static/Seal-Icon.png"
@@ -86,6 +84,7 @@ def load_nafo_reference():
 def parse_seals_csv():
     # Load NAFO Divisions reference file and compute centroids
     nafo_map = load_nafo_reference()
+    
     
     # Try loading from Azure Storage first
     df = load_df_from_azure(
@@ -248,7 +247,7 @@ def home():
     # Generate the Azure SAS URL directly for the seal icon
     full_sas_uri = AZURE_SAS_URI
     
-    if "?" in full_sas_uri:
+    if "?" in full_sas_uri: //sas uri missing
         base_uri, token = full_sas_uri.split("?", 1)
         if not base_uri.endswith("/"):
             base_uri += "/"
