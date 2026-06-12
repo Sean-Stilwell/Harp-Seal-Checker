@@ -4,7 +4,6 @@ function updateDemographicsChart(males, females, unknowns) {
     if (!ctx) return;
 
     if (typeof Chart === 'undefined') {
-        ctx.parentElement.innerHTML = `<div style="padding:15px; font-size:12px; color:#666; background:#fafafa; border:1px dashed #ccc; border-radius:4px;">Gender Profile: Males: ${males}, Females: ${females}, Unknowns: ${unknowns}</div>`;
         return;
     }
 
@@ -54,8 +53,6 @@ function updateAgeChart(labels, counts) {
     if (!ctx) return;
 
     if (typeof Chart === 'undefined') {
-        let textFallback = labels.map((l, idx) => `${l}: ${counts[idx]}`).join(', ');
-        ctx.parentElement.innerHTML = `<div style="padding:15px; font-size:12px; color:#666; background:#fafafa; border:1px dashed #ccc; border-radius:4px;">Age Groups: ${textFallback}</div>`;
         return;
     }
 
@@ -108,8 +105,6 @@ function updateStomachChart(preyContents, totalPreyItems) {
     if (!ctx) return;
 
     if (typeof Chart === 'undefined') {
-        ctx.parentElement.innerHTML = `<div style="padding:15px; font-size:12px; color:#666; background:#fafafa; border:1px dashed #ccc; border-radius:4px;">Stomach content records:<br> ${JSON.stringify(preyContents)}</div>`;
-        if (noteEl) noteEl.innerText = `${totalPreyItems} prey items recorded. \nClick on a prey to remove it from the chart.`;
         return;
     }
 
@@ -261,7 +256,6 @@ function updateDetailStomachChart(preyContents, totalPreyItems) {
     if (!ctx) return;
 
     if (typeof Chart === 'undefined') {
-        ctx.parentElement.innerHTML = `<div style="padding:10px; font-size:11px; color:#666; background:#fafafa; border:1px dashed #ccc; border-radius:4px;">Stomach content records:<br> ${JSON.stringify(preyContents)}</div>`;
         return;
     }
 
