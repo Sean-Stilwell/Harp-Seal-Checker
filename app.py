@@ -5,6 +5,18 @@ from flask import Flask, render_template
 
 app = Flask(__name__)
 
+# Hardcoded FSDH Prefix Fix
+class FSDHProxyPrefixFix:
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        # Force Flask to prefix every url_for() path with /app/FEWSC
+        environ["SCRIPT_NAME"] = "/app/FEWSC"
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = FSDHProxyPrefixFix(app.wsgi_app)
+
 # Blobbin
 # Add AzCopy Here vvvvv
 AZURE_SAS_URI = os.environ.get("SAS")
