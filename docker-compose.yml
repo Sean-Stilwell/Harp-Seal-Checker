@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    image: ghcr.io/hamsamm/Harp-Seal-Checker:latest
+    image: ghcr.io/hamsamm/harp-seal-checker:latest
     ports:
       - "80:80"
     environment:
