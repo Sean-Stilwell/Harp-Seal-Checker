@@ -3,8 +3,4 @@ services:
     build: .
     image: ghcr.io/hamsamm/harp-seal-checker:latest
     ports:
-      - "80:5000"
-    volumes:
-      - main:/app/FEWSC
-volumes: 
-  main:
+      - "80:80"
