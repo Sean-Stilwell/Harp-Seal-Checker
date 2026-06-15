@@ -8,9 +8,9 @@ app = Flask(__name__)
 # Blobbin
 # Add AzCopy Here vvvvv
 AZURE_SAS_URI = os.environ.get("SAS")
-SEALS_BLOB_NAME = "static/OPENDATA_HarpDietData2017-2021_EN.csv"
-NAFO_BLOB_NAME = "static/NAFO-Subdivision-General-Coordinates.csv"
-ICON_BLOB_NAME = "static/Seal-Icon.png"
+SEALS_BLOB_NAME = "FSDHstatic/OPENDATA_HarpDietData2017-2021_EN.csv"
+NAFO_BLOB_NAME = "FSDHstatic/NAFO-Subdivision-General-Coordinates.csv"
+ICON_BLOB_NAME = "FSDHstatic/Seal-Icon.png"
 
 
 def load_df_from_azure(blob_name, encoding='utf-8'):
