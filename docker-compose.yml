@@ -4,5 +4,3 @@ services:
     image: ghcr.io/hamsamm/harp-seal-checker:latest
     ports:
       - "80:80"
-    volumes:
-      - .:/app
